@@ -374,6 +374,62 @@ int mixer_ctl_get_array(struct mixer_ctl *ctl, void *array, size_t count)
     return 0;
 }
 
+int mixer_ctl_get_iec958(struct mixer_ctl *ctl, void *pData, unsigned int id)
+{
+    struct snd_ctl_elem_value ev;
+    int ret;
+
+    if (!ctl || (id >= ctl->info->count))
+        return -EINVAL;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.id.numid = ctl->info->id.numid;
+    ret = ioctl(ctl->mixer->fd, SNDRV_CTL_IOCTL_ELEM_READ, &ev);
+    if (ret < 0)
+        return ret;
+
+    switch (ctl->info->type) {
+    case SNDRV_CTL_ELEM_TYPE_IEC958:
+        if (pData != NULL) {
+            memcpy(pData, &ev.value.iec958, sizeof(ev.value.iec958));
+        }
+        return 0;
+
+    default:
+        return -EINVAL;
+    }
+
+    return 0;
+}
+
+int mixer_ctl_set_iec958(struct mixer_ctl *ctl, void *pData, unsigned int id)
+{
+    struct snd_ctl_elem_value ev;
+    int ret;
+
+    if (!ctl || (id >= ctl->info->count))
+        return -EINVAL;
+
+    memset(&ev, 0, sizeof(ev));
+    ev.id.numid = ctl->info->id.numid;
+    ret = ioctl(ctl->mixer->fd, SNDRV_CTL_IOCTL_ELEM_READ, &ev);
+    if (ret < 0)
+        return ret;
+
+    switch (ctl->info->type) {
+    case SNDRV_CTL_ELEM_TYPE_IEC958:
+        if (pData != NULL) {
+            memcpy(&ev.value.iec958, pData, sizeof(ev.value.iec958));
+        }
+        break;
+
+    default:
+        return -EINVAL;
+    }
+
+    return ioctl(ctl->mixer->fd, SNDRV_CTL_IOCTL_ELEM_WRITE, &ev);
+}
+
 int mixer_ctl_set_value(struct mixer_ctl *ctl, unsigned int id, int value)
 {
     struct snd_ctl_elem_value ev;
